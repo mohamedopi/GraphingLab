@@ -1,0 +1,242 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#173d9a"><title>Graphing Lab</title>
+<style>
+:root{--bg:#f5f8fc;--panel:#fff;--ink:#13233d;--muted:#65748b;--line:#d8e2ef;--blue:#245bff;--err:#c62828}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none}
+header{padding:16px 18px;background:linear-gradient(110deg,#173d9a,#1269ba 48%,#14a9a6);color:#fff}
+h1{font-size:23px;margin:0 0 4px}header p{margin:0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(230px,320px) 1fr;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:13px;box-shadow:0 5px 18px #17365d0c;min-width:0}
+h2{font-size:16px;margin:0 0 10px}
+.tabs,.buttons{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+button,select,input{font:inherit;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;color:var(--ink)}
+button{cursor:pointer}
+.active,.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;-webkit-user-select:text;user-select:text}
+.math{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:7px 0}.hidden{display:none}
+.presets{display:flex;gap:6px;flex-wrap:wrap}.presets button{font-size:12px;padding:7px}
+.canvashead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+#plotTitle{direction:ltr;margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;overflow-wrap:anywhere}
+.grad{display:inline-block;width:82px;height:8px;border-radius:8px;vertical-align:middle;background:linear-gradient(90deg,#3023a8,#1769ff,#00c9d5,#57d67b,#ffe52d)}
+canvas{display:block;width:100%;height:52vh;min-height:290px;border:1px solid var(--line);border-radius:10px;background:#fbfdff;touch-action:none}
+.status{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;min-height:2.4em}.status.err{color:var(--err);font-weight:700}
+@media(max-width:740px){main{grid-template-columns:1fr;padding:9px}.canvasPanel{order:1}.controls{order:2}canvas{height:42vh;min-height:260px}header{padding:14px}}
+</style></head><body>
+<header><h1>Graphing Lab</h1><p>رسم رياضي ثنائي وثلاثي الأبعاد · أزرق ← سماوي ← أخضر ← أصفر</p></header>
+<main><section class="panel controls"><h2>إعدادات المعادلة</h2>
+<div class="tabs"><button id="tab2" class="active">رسم 2D</button><button id="tab3">سطح 3D</button></div>
+<div id="fields2"><label for="eq2">الدالة y = f(x)</label><input id="eq2" class="math" value="sin(x)" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+<div class="row2"><div><label for="xmin">أقل قيمة x</label><input id="xmin" class="math" type="number" value="-10" step="any" inputmode="decimal"></div><div><label for="xmax">أكبر قيمة x</label><input id="xmax" class="math" type="number" value="10" step="any" inputmode="decimal"></div></div>
+<div class="row2"><div><label for="ymin">أقل قيمة y (اختياري)</label><input id="ymin" class="math" type="number" placeholder="تلقائي" step="any" inputmode="decimal"></div><div><label for="ymax">أكبر قيمة y (اختياري)</label><input id="ymax" class="math" type="number" placeholder="تلقائي" step="any" inputmode="decimal"></div></div></div>
+<div id="fields3" class="hidden"><label for="coordMode">نظام الإحداثيات</label><select id="coordMode"><option value="cart">ديكارتي: z=f(x,y)</option><option value="cyl">أسطواني: z=f(r,theta)</option><option value="sph">كروي: r=f(theta,phi)</option></select>
+<label for="eq3">معادلة السطح</label><input id="eq3" class="math" value="sin(sqrt(x^2+y^2))" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"><div id="eqHint" class="hint">الديكارتي: z=f(x,y).</div>
+<label for="range3">حد المجال L</label><input id="range3" class="math" type="number" value="3" min="0.5" max="20" step="0.5" inputmode="decimal"><label for="resolution">دقة الرسم</label><select id="resolution"><option value="20">سريع</option><option value="30" selected>متوازن</option><option value="42">تفصيلي</option><option value="56">دقيق جدًا</option></select></div>
+<div class="buttons"><button id="draw" class="primary">ارسم</button><button id="reset">إعادة ضبط المنظور</button></div><label>أمثلة سريعة</label><div class="presets" id="presets"></div>
+<p class="hint">يمكنك كتابة 2x وsin(x)cos(x) وx^2 وpi. الزوايا بالراديان. الدوال: sin cos tan asin acos atan sinh cosh tanh sqrt cbrt abs exp ln log log10 floor ceil round sign min max pow atan2.</p>
+<p class="hint">2D: اسحب للتحريك يمينًا ويسارًا وافتح إصبعين للتكبير. 3D: اسحب للتدوير وافتح إصبعين للتكبير. المعادلات الضمنية مثل F(r,theta,phi)=0 غير مدعومة.</p></section>
+<section class="panel canvasPanel"><div class="canvashead"><h2 id="plotTitle">y = sin(x)</h2><span class="hint">الألوان: <span class="grad"></span></span></div><canvas id="plot" aria-label="الرسم الرياضي"></canvas><div class="status" id="status">جاهز</div></section></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('plot'),ctx=canvas.getContext('2d');
+let mode=2,az=.65,el=.62,zoom=1,surf=null,raf=0;
+const DEF_AZ=.65,DEF_EL=.62;
+
+/* ---------- presets ---------- */
+const p2=[['sin(x)','sin(x)'],['قطع مكافئ','x^2/4'],['موجة مخمدة','exp(-abs(x)/4)*sin(3*x)'],['cos(x)','cos(x)'],['tan(x)','tan(x)'],['1/x','1/x']];
+const pCart=[['تموج','sin(sqrt(x^2+y^2))'],['قطع مكافئ','(x^2+y^2)/4'],['سرج','x^2-y^2'],['موجة','cos(x)*sin(y)']];
+const pCyl=[['تموج','sin(r)'],['قطع مكافئ','r^2/4'],['مخروط','r'],['حلزون','r*sin(theta)']];
+const pSph=[['كرة','2'],['تشوه بسيط','2+0.4*sin(phi)*cos(theta)'],['بصلة','2+sin(3*theta)*sin(phi)^2']];
+const HINTS={cart:'الديكارتي: z=f(x,y).',cyl:'الأسطواني: z=f(r,theta)، r من 0 إلى L وtheta من 0 إلى 2π.',sph:'الكروي: r=f(theta,phi)، theta من 0 إلى 2π وphi من 0 إلى π (من القطب).'};
+const DEF_EQ={cart:'sin(sqrt(x^2+y^2))',cyl:'sin(r)',sph:'2'};
+
+/* ---------- colors ---------- */
+function palette(t){t=Math.max(0,Math.min(1,t));const s=[[48,35,168],[23,105,255],[0,201,213],[87,214,123],[255,229,45]],q=t*4,i=Math.min(3,Math.floor(q)),a=q-i;return `rgb(${s[i].map((v,k)=>Math.round(v+(s[i+1][k]-v)*a)).join(',')})`}
+
+/* ---------- safe expression parser (no eval) ---------- */
+const FUNCS={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,sqrt:Math.sqrt,cbrt:Math.cbrt,abs:Math.abs,exp:Math.exp,ln:Math.log,log:Math.log,log10:Math.log10,log2:Math.log2,floor:Math.floor,ceil:Math.ceil,round:Math.round,sign:Math.sign,min:Math.min,max:Math.max,pow:Math.pow,atan2:Math.atan2};
+const CONSTS={pi:Math.PI,e:Math.E,tau:2*Math.PI};
+function compile(src,vars){
+  let s=String(src).toLowerCase()
+    .replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776)
+    .replace(/[−–]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/π/g,'pi')
+    .replace(/\*\*/g,'^').replace(/[\s\u200e\u200f\u202a-\u202e]+/g,'');
+  const eq=s.indexOf('=');if(eq>=0){if(s.indexOf('=',eq+1)>=0)throw Error('استخدم علامة = مرة واحدة فقط.');s=s.slice(eq+1)}
+  if(!s)throw Error('اكتب معادلة أولًا.');
+  const names=[...vars,...Object.keys(FUNCS),...Object.keys(CONSTS)].sort((a,b)=>b.length-a.length),toks=[];
+  for(let i=0;i<s.length;){
+    const c=s[i],rest=s.slice(i);let m;
+    if((m=/^(\d+\.?\d*|\.\d+)/.exec(rest))){toks.push({t:'n',v:parseFloat(m[1])});i+=m[1].length}
+    else if(/[a-z]/.test(c)){const nm=names.find(n=>rest.startsWith(n));if(!nm)throw Error('رمز غير معروف: '+/^[a-z]+/.exec(rest)[0]);toks.push({t:'id',v:nm});i+=nm.length}
+    else if('+-*/^(),'.includes(c)){toks.push({t:'op',v:c});i++}
+    else throw Error('رمز غير مدعوم: '+c);
+  }
+  let p=0;
+  const isOp=v=>toks[p]&&toks[p].t==='op'&&toks[p].v===v,eat=v=>isOp(v)?(p++,true):false;
+  const startsFactor=()=>{const t=toks[p];return !!t&&(t.t==='n'||t.t==='id'||(t.t==='op'&&t.v==='('))};
+  function expr(){let l=term();for(;;){if(eat('+')){const a=l,b=term();l=A=>a(A)+b(A)}else if(eat('-')){const a=l,b=term();l=A=>a(A)-b(A)}else return l}}
+  function term(){let l=unary();for(;;){if(eat('*')){const a=l,b=unary();l=A=>a(A)*b(A)}else if(eat('/')){const a=l,b=unary();l=A=>a(A)/b(A)}else if(startsFactor()){const a=l,b=unary();l=A=>a(A)*b(A)}else return l}}
+  function unary(){if(eat('-')){const a=unary();return A=>-a(A)}if(eat('+'))return unary();return power()}
+  function power(){const b=primary();if(eat('^')){const e=unary();return A=>Math.pow(b(A),e(A))}return b}
+  function primary(){
+    const t=toks[p++];if(!t)throw Error('المعادلة ناقصة.');
+    if(t.t==='n'){const v=t.v;return()=>v}
+    if(t.t==='id'){
+      const k=vars.indexOf(t.v);if(k>=0)return A=>A[k];
+      if(t.v in CONSTS){const v=CONSTS[t.v];return()=>v}
+      const f=FUNCS[t.v];if(!eat('('))throw Error('اكتب أقواسًا بعد الدالة '+t.v+' مثل '+t.v+'(x).');
+      const args=[expr()];while(eat(','))args.push(expr());if(!eat(')'))throw Error('قوس الإغلاق ناقص.');
+      return A=>f(...args.map(g=>g(A)));
+    }
+    if(t.v==='('){const a=expr();if(!eat(')'))throw Error('قوس الإغلاق ناقص.');return a}
+    throw Error('رمز في غير موضعه: '+t.v);
+  }
+  const root=expr();if(p<toks.length)throw Error('رمز في غير موضعه: '+toks[p].v);
+  return(...a)=>root(a);
+}
+
+/* ---------- canvas helpers ---------- */
+function size(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.max(1,Math.round(r.width*d));canvas.height=Math.max(1,Math.round(r.height*d));ctx.setTransform(d,0,0,d,0,0);return[r.width,r.height]}
+function bg(w,h){ctx.fillStyle='#fbfdff';ctx.fillRect(0,0,w,h)}
+const num=id=>Number($(id).value);
+function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle('err',!!err)}
+function niceStep(span,target){const raw=span/target,pw=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/pw;return(f<1.5?1:f<3?2:f<7?5:10)*pw}
+function fmt(v){const a=Math.abs(v);if(a!==0&&(a>=1e6||a<1e-4))return v.toExponential(1);return String(parseFloat(v.toPrecision(8)))}
+const short=v=>+v.toPrecision(7);
+
+/* ---------- 2D ---------- */
+function draw2(){
+  const[w,h]=size();bg(w,h);
+  const xmin=num('xmin'),xmax=num('xmax');
+  if(!Number.isFinite(xmin)||!Number.isFinite(xmax)||!(xmax>xmin))throw Error('أكبر قيمة x يجب أن تكون أكبر من أقل قيمة.');
+  const fn=compile($('eq2').value,['x']),n=Math.max(600,Math.floor(w*2)),ys=new Array(n+1),fin=[];
+  for(let i=0;i<=n;i++){let y=fn(xmin+(xmax-xmin)*i/n);if(typeof y!=='number'||!Number.isFinite(y)||Math.abs(y)>1e9)y=NaN;else fin.push(y);ys[i]=y}
+  let lo,hi;const a=$('ymin').value.trim(),b=$('ymax').value.trim();
+  if(a!==''&&b!==''&&Number(b)>Number(a)){lo=Number(a);hi=Number(b)}
+  else{
+    if(!fin.length)throw Error('لا توجد قيم حقيقية للدالة في هذا المجال.');
+    fin.sort((u,v)=>u-v);lo=fin[0];hi=fin[fin.length-1];
+    const q=k=>fin[Math.floor((fin.length-1)*k)],p1=q(.02),p9=q(.98),inner=p9-p1;
+    if(inner>0&&hi-lo>30*inner){lo=p1-inner*.25;hi=p9+inner*.25}
+    else if(hi-lo<1e-9){lo-=1;hi+=1}
+    const pd=(hi-lo)*.08;lo-=pd;hi+=pd;
+  }
+  const L=46,R=12,T=12,B=24,pw=w-L-R,ph=h-T-B;
+  const X=x=>L+(x-xmin)/(xmax-xmin)*pw,Y=y=>T+ph-(y-lo)/(hi-lo)*ph;
+  ctx.font='11px system-ui,sans-serif';ctx.direction='ltr';ctx.lineWidth=1;
+  const sx=niceStep(xmax-xmin,Math.max(3,pw/75)),sy=niceStep(hi-lo,Math.max(3,ph/50));
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let k=Math.ceil(xmin/sx);k*sx<=xmax;k++){const v=k*sx,x=X(v);ctx.strokeStyle='#e3eaf3';ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+ph);ctx.stroke();ctx.fillStyle='#65748b';ctx.fillText(fmt(v),x,T+ph+5)}
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let k=Math.ceil(lo/sy);k*sy<=hi;k++){const v=k*sy,y=Y(v);ctx.strokeStyle='#e3eaf3';ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+pw,y);ctx.stroke();ctx.fillStyle='#65748b';ctx.fillText(fmt(v),L-6,y)}
+  ctx.strokeStyle='#5d6b80';ctx.lineWidth=1.4;
+  if(lo<0&&hi>0){ctx.beginPath();ctx.moveTo(L,Y(0));ctx.lineTo(L+pw,Y(0));ctx.stroke()}
+  if(xmin<0&&xmax>0){ctx.beginPath();ctx.moveTo(X(0),T);ctx.lineTo(X(0),T+ph);ctx.stroke()}
+  ctx.lineWidth=1;ctx.strokeStyle='#c5d1e2';ctx.strokeRect(L,T,pw,ph);
+  ctx.save();ctx.beginPath();ctx.rect(L,T,pw,ph);ctx.clip();
+  ctx.lineWidth=2.6;ctx.lineJoin='round';ctx.strokeStyle='#1769ff';ctx.beginPath();
+  let open=false,py=0;
+  for(let i=0;i<=n;i++){const y=ys[i];if(Number.isNaN(y)){open=false;continue}const px=X(xmin+(xmax-xmin)*i/n),yy=Y(y);if(open&&Math.abs(yy-py)>ph*.9)open=false;if(open)ctx.lineTo(px,yy);else{ctx.moveTo(px,yy);open=true}py=yy}
+  ctx.stroke();ctx.restore();
+  setStatus(`y=f(x) · x∈[${fmt(xmin)}, ${fmt(xmax)}] · y∈[${fmt(lo)}, ${fmt(hi)}]`);
+}
+
+/* ---------- 3D ---------- */
+function buildSurface(){
+  const Lr=num('range3'),N=Number($('resolution').value),cm=$('coordMode').value;
+  if(!(Lr>0))throw Error('حد المجال L يجب أن يكون موجبًا.');
+  const fn=compile($('eq3').value,cm==='cart'?['x','y']:cm==='cyl'?['r','theta']:['theta','phi']);
+  const M=(N+1)*(N+1),X=new Float64Array(M),Y=new Float64Array(M),Z=new Float64Array(M);
+  let zlo=Infinity,zhi=-Infinity,k=0;
+  for(let j=0;j<=N;j++)for(let i=0;i<=N;i++,k++){
+    let x,y,z;
+    if(cm==='cart'){x=-Lr+2*Lr*i/N;y=-Lr+2*Lr*j/N;z=fn(x,y)}
+    else if(cm==='cyl'){const r=Lr*i/N,t=2*Math.PI*j/N;x=r*Math.cos(t);y=r*Math.sin(t);z=fn(r,t)}
+    else{const t=2*Math.PI*i/N,f=Math.PI*j/N,r=fn(t,f);x=r*Math.sin(f)*Math.cos(t);y=r*Math.sin(f)*Math.sin(t);z=r*Math.cos(f)}
+    if(typeof z!=='number'||![x,y,z].every(Number.isFinite)||Math.max(Math.abs(x),Math.abs(y),Math.abs(z))>1e6){x=y=z=NaN}
+    else{zlo=Math.min(zlo,z);zhi=Math.max(zhi,z)}
+    X[k]=x;Y[k]=y;Z[k]=z;
+  }
+  if(!Number.isFinite(zlo))throw Error('لا توجد قيم حقيقية للسطح في هذا المجال.');
+  const span=zhi-zlo||1,NX=new Float64Array(M),NY=new Float64Array(M),NZ=new Float64Array(M),TT=new Float64Array(M);
+  let m=0;if(cm==='sph'){for(let q=0;q<M;q++)if(!Number.isNaN(Z[q]))m=Math.max(m,Math.abs(X[q]),Math.abs(Y[q]),Math.abs(Z[q]));m=m||1}
+  for(let q=0;q<M;q++){
+    if(cm==='sph'){NX[q]=X[q]/m;NY[q]=Y[q]/m;NZ[q]=Z[q]/m}
+    else{NX[q]=X[q]/Lr;NY[q]=Y[q]/Lr;NZ[q]=(Z[q]-(zlo+zhi)/2)/span*1.7}
+    TT[q]=(Z[q]-zlo)/span;
+  }
+  surf={N,NX,NY,NZ,TT,cm,zlo,zhi,base:cm==='sph'?null:-0.95};
+}
+function render3(){
+  const[w,h]=size();bg(w,h);if(!surf)return;
+  const{N,NX,NY,NZ,TT,zlo,zhi,base}=surf,M=(N+1)*(N+1);
+  const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el),sc=Math.min(w,h)*.22*zoom,ox=w/2,oy=h*.52;
+  const P=(x,y,z)=>{const u=x*ca-y*sa,v=x*sa+y*ca;return[ox+u*sc,oy-(z*ce+v*se)*sc,v*ce-z*se]};
+  const SX=new Float64Array(M),SY=new Float64Array(M),SD=new Float64Array(M);
+  for(let q=0;q<M;q++){if(Number.isNaN(NZ[q])){SX[q]=SY[q]=SD[q]=NaN;continue}const r=P(NX[q],NY[q],NZ[q]);SX[q]=r[0];SY[q]=r[1];SD[q]=r[2]}
+  if(base!==null){
+    const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>P(x,y,base));
+    ctx.beginPath();ctx.moveTo(c[0][0],c[0][1]);for(let i=1;i<4;i++)ctx.lineTo(c[i][0],c[i][1]);ctx.closePath();
+    ctx.fillStyle='#eef3fa';ctx.fill();ctx.strokeStyle='#c5d1e2';ctx.lineWidth=1;ctx.stroke();
+  }
+  const quads=[];
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const a=j*(N+1)+i,b=a+1,c=a+N+2,d=a+N+1,d4=SD[a]+SD[b]+SD[c]+SD[d];
+    if(Number.isNaN(d4))continue;
+    quads.push([a,b,c,d,d4]);
+  }
+  quads.sort((p,q)=>q[4]-p[4]);
+  ctx.lineJoin='round';ctx.lineWidth=.5;ctx.strokeStyle='rgba(10,38,70,.35)';
+  for(const[a,b,c,d]of quads){
+    ctx.beginPath();ctx.moveTo(SX[a],SY[a]);ctx.lineTo(SX[b],SY[b]);ctx.lineTo(SX[c],SY[c]);ctx.lineTo(SX[d],SY[d]);ctx.closePath();
+    ctx.fillStyle=palette((TT[a]+TT[b]+TT[c]+TT[d])/4);ctx.fill();ctx.stroke();
+  }
+  /* axis triad */
+  const o=P(0,0,0),ax=[['x',1,0,0,'#d9534f'],['y',0,1,0,'#2e9e5b'],['z',0,0,1,'#245bff']],bx=34,by=h-34;
+  ctx.font='bold 11px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=2;
+  for(const[nm,x,y,z,col]of ax){const e=P(x,y,z),ux=(e[0]-o[0])/sc*20,uy=(e[1]-o[1])/sc*20;ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+ux,by+uy);ctx.stroke();ctx.fillStyle=col;ctx.fillText(nm,bx+ux*1.3,by+uy*1.3)}
+  setStatus(`سطح 3D · شبكة ${N}×${N} · z∈[${fmt(zlo)}, ${fmt(zhi)}] · اسحب للتدوير وافتح إصبعين للتكبير`);
+}
+
+/* ---------- driver ---------- */
+function titleText(){if(mode===2)return'y = '+$('eq2').value.replace(/^\s*(y|f\(x\))\s*=\s*/i,'');const cm=$('coordMode').value;return(cm==='sph'?'r = ':'z = ')+$('eq3').value.replace(/^\s*[zr]\s*=\s*/i,'')}
+function render(){try{mode===2?draw2():render3()}catch(e){setStatus('خطأ في المعادلة: '+e.message,true)}}
+function schedule(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;render()})}
+function draw(){
+  try{$('plotTitle').textContent=titleText();if(mode===3)buildSurface();render()}
+  catch(e){const[w,h]=size();bg(w,h);setStatus('خطأ في المعادلة: '+e.message,true)}
+}
+function buildPresets(){const c=$('coordMode').value,list=mode===2?p2:c==='sph'?pSph:c==='cyl'?pCyl:pCart;$('presets').innerHTML='';for(const[n,e]of list){const b=document.createElement('button');b.textContent=n;b.onclick=()=>{(mode===2?$('eq2'):$('eq3')).value=e;draw()};$('presets').appendChild(b)}}
+function setMode(m){mode=m;$('tab2').classList.toggle('active',m===2);$('tab3').classList.toggle('active',m===3);$('fields2').classList.toggle('hidden',m!==2);$('fields3').classList.toggle('hidden',m!==3);buildPresets();draw()}
+$('tab2').onclick=()=>setMode(2);$('tab3').onclick=()=>setMode(3);
+$('coordMode').onchange=()=>{const c=$('coordMode').value;$('eq3').value=DEF_EQ[c];$('eqHint').textContent=HINTS[c];buildPresets();draw()};
+$('draw').onclick=draw;$('resolution').onchange=draw;
+$('reset').onclick=()=>{az=DEF_AZ;el=DEF_EL;zoom=1;if(mode===2){$('xmin').value=-10;$('xmax').value=10;$('ymin').value='';$('ymax').value=''}draw()};
+['eq2','eq3','xmin','xmax','ymin','ymax','range3'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur();draw()}}));
+
+/* ---------- gestures: drag / pinch / wheel ---------- */
+const ptrs=new Map();let lastDist=0;
+const pinchDist=()=>{if(ptrs.size<2)return 0;const[a,b]=[...ptrs.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+function zoomBy(f){
+  if(mode===3){zoom=Math.max(.4,Math.min(3.5,zoom*f));schedule();return}
+  const a=num('xmin'),b=num('xmax');if(!(b>a))return;
+  const c=(a+b)/2,half=(b-a)/2/f;$('xmin').value=short(c-half);$('xmax').value=short(c+half);schedule();
+}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});lastDist=pinchDist()});
+canvas.addEventListener('pointermove',e=>{
+  const o=ptrs.get(e.pointerId);if(!o)return;
+  const dx=e.clientX-o.x,dy=e.clientY-o.y;o.x=e.clientX;o.y=e.clientY;
+  if(ptrs.size>=2){const d=pinchDist();if(lastDist>0&&d>0)zoomBy(d/lastDist);lastDist=d;return}
+  if(mode===3){az+=dx*.009;el=Math.max(-1.5,Math.min(1.5,el+dy*.009));schedule()}
+  else{const a=num('xmin'),b=num('xmax'),r=canvas.getBoundingClientRect(),shift=-dx/Math.max(1,r.width-58)*(b-a);if(b>a){$('xmin').value=short(a+shift);$('xmax').value=short(b+shift);schedule()}}
+});
+const endPtr=e=>{ptrs.delete(e.pointerId);lastDist=pinchDist()};
+canvas.addEventListener('pointerup',endPtr);canvas.addEventListener('pointercancel',endPtr);
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoomBy(e.deltaY<0?1.1:1/1.1)},{passive:false});
+window.addEventListener('resize',schedule);
+buildPresets();draw();
+</script></body></html>
